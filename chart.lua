@@ -4,3 +4,4 @@
 charts = {
   current_chart = nil,
 }
+

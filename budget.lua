@@ -36,6 +36,7 @@ function budget.new(args)
     table.insert(o.transactions, { month = cur_month, {} } )
     o.fixed_expenses = args.fixed
     o.current_month = o.transactions[1].month
+    o.current_month_index = 1
     o.savings = 0
     o.expenses = {
       monthly_avg = 0,
@@ -57,7 +58,10 @@ function budget.new_from_file(table)
   return table
 end
 
-function budget:add_transaction(tag, amount, month)
+-- self explanatory except for 'return_id'
+-- return specifies whether or not the transaction object reference should be passed back to the call
+-- mainly for the creation of a button to delete the transaction
+function budget:add_transaction(tag, amount, month, return_id)
   -- if the tag is new...
   if not self:has_transaction_tag(tag) then
     table.insert(self.transaction_tags, tag)
@@ -67,15 +71,38 @@ function budget:add_transaction(tag, amount, month)
   if not self.transactions[month] then
     self.transactions[month] = {}
   end
-  table.insert(self.transactions[month], transaction.new(tag, amount) )
+  local new_transaction = transaction.new(tag, amount)
+  table.insert(self.transactions[month], new_transaction )
   -- special cases: savings and income
-  -- all other tags go into 
+  -- all other tags go into expenses
   if tag == "savings" then
     self.savings = self.savings + amount
   elseif tag == "income" then
     self.income.history[month] = self.income.history[month] + amount
   else
     self.expenses.history[month] = self.expenses.history[month] + amount
+  end
+  if return_id then
+    return new_transaction
+  end
+end
+
+-- removes a specified transaction
+-- takes a month and an id
+function budget:remove_transaction(month, to_remove)
+  print("removing id "..to_remove.id.." from "..month)
+  for i = 1, #self.transactions[month] do
+    if self.transactions[month][i].id == to_remove.id then
+      if to_remove.tag == "income" then
+        self.income.history[month] = self.income.history[month] - to_remove.amt
+      elseif to_remove.tag == "savings" then
+        self.savings = self.savings - to_remove.amount
+      else
+        self.expenses.history[month] = self.expenses.history[month] - to_remove.amt
+      end
+      table.remove(self.transactions[month], i)
+      break
+    end
   end
 end
 
@@ -146,6 +173,22 @@ end
 
 function budget:withdraw_savings(amt)
   self.savings = self.savings - amt
+end
+
+-- switch month
+-- takes a boolean indicated which direction to switch 
+function budget:switch_month(foward)
+  if forward then
+    if self.transactions[self.current_month_index + 1] then
+      self.current_month_index = self.current_month_index + 1
+      self.current_month = self.transactions[self.current_month_index].month
+    end
+  else 
+    if self.transactions[self.current_month_index - 1] then
+      self.current_month_index = self.current_month_index - 1
+      self.current_month = self.transactions[self.current_month_index].month
+    end
+  end
 end
 
 -- return whether or not the transaction tag already exists

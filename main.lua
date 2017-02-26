@@ -1,6 +1,6 @@
 -- budget tracker
 
-require "charts"
+require "chart"
 require "budget"
 require "transaction"
 require "tag"
@@ -41,8 +41,12 @@ function love.load()
   load_budget_button:SetState("choose")
   load_budget_button.OnClick = 
     function()
-      local b = util.load_table(new_budget_input:GetText())
-      main_window.load( budget.new_from_file(b) )
+      local b = util.load_table(new_budget_input:GetText()..".txt")
+      if b then
+        main_window.load( budget.new_from_file(b) )
+      else
+        main_window.load( budget.new{ name = new_budget_input:GetText(), fixed = {} } )
+      end
     end
 end
 

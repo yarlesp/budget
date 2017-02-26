@@ -15,10 +15,19 @@ transaction = {
 transaction.__index = transaction
 
 function transaction.new(t, amount, date)
+  -- id assignment
+  local id_count = 0
+  local new_id = 
+    function() 
+      id_count = id_count + 1
+      return id_count
+    end
+  -- rest of the object
   local o = {}
   setmetatable(o, transaction)
   o.amt = amount
   o.tag = t
   o.date = os.date("%b %d")
+  o.id = new_id()
   return o
 end

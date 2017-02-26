@@ -24,9 +24,20 @@ function main_window.load(budget)
   if my_budget.transactions[my_budget.current_month] then
     for i = 1, #my_budget.transactions[my_budget.current_month] do
       local t = my_budget.transactions[my_budget.current_month][i]
-      local newtrans = loveframes.Create("text")
-      newtrans:SetText("$"..t.amt..", "..t.tag.." \tentered "..t.date)
-      if tag == "income" then newtrans:SetDefaultColor(0,200,0) end
+      local newtrans = loveframes.Create("panel")
+      newtrans:SetSize(240, 20)
+      local newtrans_label = loveframes.Create("text", newtrans)
+      if t.tag == "income" then newtrans_label:SetDefaultColor(0,200,0) end
+      newtrans_label:SetText("$"..t.amt..", "..t.tag.." ("..t.date..")")
+      newtrans_label:SetPos(25, 5)
+      local newtrans_delete = loveframes.Create("button", newtrans)
+      newtrans_delete:SetPos(0, 0)
+      newtrans_delete:SetSize(20, 20)
+      newtrans_delete:SetText("x")
+      newtrans_delete.OnClick = function() 
+          my_budget:remove_transaction(my_budget.current_month, t) 
+          transactions:RemoveItem(newtrans)
+        end
       transactions:AddItem(newtrans)
     end
   end
@@ -117,29 +128,43 @@ function main_window.load(budget)
   transaction_entry_button.OnClick = 
     function() 
       local tag, amount = ""
+      local created_transaction = nil
       local date = os.date("%b %d")
       if transaction_tag_select:GetChoice() == "new" then
         if not my_budget:has_transaction_tag(transaction_tag_add:GetText()) then
           transaction_tag_select:AddChoice(transaction_tag_add:GetText())
           limit_selector:AddChoice(transaction_tag_add:GetText())
         end
-        my_budget:add_transaction(
+        created_transaction = my_budget:add_transaction(
           transaction_tag_add:GetText(), 
           value_entry:GetText(), 
-          my_budget.current_month ) 
+          my_budget.current_month,
+          true) 
         tag = transaction_tag_add:GetText()
         amount = value_entry:GetText()
       else
-        my_budget:add_transaction(
+        created_transaction = my_budget:add_transaction(
           transaction_tag_select:GetChoice(), 
           value_entry:GetText(), 
-          my_budget.current_month ) 
+          my_budget.current_month,
+          true ) 
         tag = transaction_tag_select:GetChoice()
         amount = value_entry:GetText()
       end
-      local newtrans = loveframes.Create("text")
-      newtrans:SetText("$"..amount..", "..tag.." \tentered "..date)
-      if tag == "income" then newtrans:SetDefaultColor(0,200,0) end
+      local newtrans = loveframes.Create("panel")
+      newtrans:SetSize(240, 20)
+      local newtrans_label = loveframes.Create("text", newtrans)
+      if tag == "income" then newtrans_label:SetDefaultColor(0,200,0) end
+      newtrans_label:SetText("$"..amount..", "..tag.." ("..date..")")
+      newtrans_label:SetPos(25, 5)
+      local newtrans_delete = loveframes.Create("button", newtrans)
+      newtrans_delete:SetPos(0, 0)
+      newtrans_delete:SetSize(20, 20)
+      newtrans_delete:SetText("x")
+      newtrans_delete.OnClick = function() 
+          my_budget:remove_transaction(my_budget.current_month, created_transaction) 
+          transactions:RemoveItem(newtrans)
+        end
       transactions:AddItem(newtrans)
     end
     
@@ -220,6 +245,21 @@ function main_window.load(budget)
   budget_info_label:SetPos(665, 30)
   budget_info_label:SetState("main")
   
+  -- TODO: figure out how to change months lol
+  local next_month = loveframes.Create("button", frame)
+  next_month:SetText(">")
+  next_month:SetPos(998, 28)
+  next_month:SetSize(20 , 15)
+  next_month:SetState("main")
+  next_month.OnClick = function() my_budget:switch_month(true) end
+  
+  local prev_month = loveframes.Create("button", frame)
+  prev_month:SetText("<")
+  prev_month:SetPos(975, 28)
+  prev_month:SetSize(20, 15)
+  prev_month:SetState("main")
+  prev_month.OnClick = function() my_budget:switch_month(false) end
+  
   local budget_save = loveframes.Create("button", budget_info_panel)
   budget_save:SetText("Save Budget")
   budget_save:SetPos(265, 5)
@@ -244,6 +284,8 @@ function main_window.load(budget)
       local to_print = ""
       to_print = to_print.."Fixed Expenses: $"..my_budget:get_fixed_sum().."\n\n"
       to_print = to_print..my_budget:print_fixed_expenses().."\n"
+      to_print = to_print.."Variable Expenses for "..my_budget.current_month..": $"..my_budget:get_variable_expenses(my_budget.current_month).."\n"
+      to_print = to_print.."Income for "..my_budget.current_month..": $"..my_budget:get_income(my_budget.current_month)
       object:SetText(to_print)
     end
   end
