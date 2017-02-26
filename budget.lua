@@ -46,7 +46,7 @@ function budget.new(args)
       monthly_avg = 0,
       history = { [cur_month] = 0, }
     }
-    o.limits =  { }
+    o.limits = { }
   end
   return o
 end
@@ -96,7 +96,7 @@ function budget:remove_transaction(month, to_remove)
       if to_remove.tag == "income" then
         self.income.history[month] = self.income.history[month] - to_remove.amt
       elseif to_remove.tag == "savings" then
-        self.savings = self.savings - to_remove.amount
+        self.savings = self.savings - to_remove.amt
       else
         self.expenses.history[month] = self.expenses.history[month] - to_remove.amt
       end
@@ -162,8 +162,10 @@ function budget:get_variable_expenses(month)
 end
 
 function budget:set_limit(tag, amount)
-  if self.transaction_tags[tag] then
+  print(tag.." "..amount)
+  if self:has_transaction_tag(tag) then
     self.limits[tag] = amount
+    print("limit for "..tag.." set to "..amount)
   end
 end
 

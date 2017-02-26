@@ -41,7 +41,7 @@ function main_window.load(budget)
       transactions:AddItem(newtrans)
     end
   end
-
+  
   -- limits setting area
   local limits_label = loveframes.Create("text", frame)
   limits_label:SetPos(260, 160)
@@ -64,6 +64,20 @@ function main_window.load(budget)
     end
   end
   
+  -- budget limits display area
+  budget_limit_label = loveframes.Create("text", frame)
+  budget_limit_label:SetPos(260, 220)
+  budget_limit_label:SetText("Budget Limits:")
+    
+  budget_limit_list = loveframes.Create("list", frame)
+  budget_limit_list:SetPos(260, 235)
+  budget_limit_list:SetSize(190, 150)
+  for k, v in pairs(my_budget.limits) do
+    local new_limit = loveframes.Create("text")
+    new_limit:SetText(k..": "..v.."/month")
+    budget_limit_list:AddItem(new_limit)
+  end
+  
   -- entry box for limit
   local limit_entry = loveframes.Create("textinput", limits_panel )
   limit_entry:SetPos(5, 5)
@@ -72,12 +86,21 @@ function main_window.load(budget)
   limit_entry:SetState("main")
   limit_entry:SetEditable(true)
   
-  -- button 
+  -- add new limit
   local limit_button = loveframes.Create("button", limits_panel)
   limit_button:SetPos(315, 5)
   limit_button:SetText("Set Limit")
   limit_button:SetState("main")
-  
+  limit_button.OnClick = function()
+    my_budget:set_limit(limit_selector:GetChoice(), limit_entry:GetText() )
+    budget_limit_list:Clear()
+    for k, v in pairs(my_budget.limits) do
+      local new_limit = loveframes.Create("text")
+      new_limit:SetText(k..": "..v.."/month")
+      budget_limit_list:AddItem(new_limit)
+    end
+  end
+
   -- place to enter new transactions
   local transaction_entry_label = loveframes.Create("text", frame)
   transaction_entry_label:SetText("Enter New Transaction")
@@ -245,7 +268,6 @@ function main_window.load(budget)
   budget_info_label:SetPos(665, 30)
   budget_info_label:SetState("main")
   
-  -- TODO: figure out how to change months lol
   local next_month = loveframes.Create("button", frame)
   next_month:SetText(">")
   next_month:SetPos(998, 28)
